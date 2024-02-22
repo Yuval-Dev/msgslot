@@ -64,9 +64,11 @@ void free_all(pbtree_layer ptr, int depth) {
   }
   int i;
   for(i = 0; i < BTREE_CHILD_COUNT; i++) {
-    free_all(ptr->children[i], depth + 1);
-    kfree(ptr->children[i]);
-    printf("kfree(%p)\n", ptr->children[i]);
+    if(ptr->children[i]) {
+      free_all(ptr->children[i], depth + 1);
+      kfree(ptr->children[i]);
+      printk("kfree(%p)\n", ptr->children[i]);
+    }
   }
 }
 
@@ -84,8 +86,7 @@ static int device_open( struct inode* inode,
 static int device_release( struct inode* inode,
                            struct file*  file)
 {
-  pchannel cur_channel;
-  cur_channel = (pchannel)file->private_data;
+  file->private_data = (void *)0;
   printk("Invoking device_release(%p,%p)\n", inode, file);
   return SUCCESS;
 }
