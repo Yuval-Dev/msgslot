@@ -62,7 +62,7 @@ void free_all(pbtree_layer ptr, int depth) {
   int i;
   for(i = 0; i < BTREE_CHILD_COUNT; i++) {
     if(ptr->children[i] != 0) {
-      if(i != BTREE_CHILD_COUNT - 1) {
+      if(depth != BTREE_CHILD_COUNT - 1) {
         free_all(ptr->children[i], depth + 1);
       }
       kfree(ptr->children[i]);
