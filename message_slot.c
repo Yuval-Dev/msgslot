@@ -31,6 +31,7 @@ pchannel channel_open(int index) {
     i = index & BTREE_LEVEL_MASK(level);
     if(cur_node->children[i] == 0) {
       new_child = kmalloc(sizeof(btree_layer), GFP_KERNEL);
+      printk("kmalloc() -> %p\n", new_child);
       if(new_child == 0) {
         printk("in channel_open(): bad kmalloc()\n");
         return 0;
@@ -43,6 +44,7 @@ pchannel channel_open(int index) {
   i = index & BTREE_LEVEL_MASK(BTREE_NUM_LEVELS - 1);
   if(cur_node->children[i] == 0) {
     void * addr = kmalloc(sizeof(struct _channel), GFP_KERNEL);
+    printk("kmalloc() -> %p\n", addr);
     if(addr == 0) {
       printk("in channel_open(): bad kmalloc() 2\n");
       return 0;
@@ -64,6 +66,7 @@ void free_all(pbtree_layer ptr, int depth) {
   for(i = 0; i < BTREE_CHILD_COUNT; i++) {
     free_all(ptr->children[i], depth + 1);
     kfree(ptr->children[i]);
+    printf("kfree(%p)\n", ptr->children[i]);
   }
 }
 
@@ -187,9 +190,6 @@ static int __init simple_init(void)
   memset(&btree, 0, sizeof(btree_layer));
   int rc = -1;
   // init dev struct
-  memset( &device_info, 0, sizeof(struct chardev_info) );
-  spin_lock_init( &device_info.lock );
-
   // Register driver capabilities. Obtain major num
   rc = register_chrdev( MAJOR_NUM, DEVICE_RANGE_NAME, &Fops );
 
