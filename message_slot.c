@@ -42,7 +42,7 @@ pchannel channel_open(int index) {
     }
     cur_node = cur_node->children[i];
   }
-  i = index & BTREE_CHILD_BITS;
+  i = index & BTREE_CHILD_MASK;
   i >>= BTREE_CHILD_BITS;
   if(cur_node->children[i] == 0) {
     void * addr = kmalloc(sizeof(struct _channel), GFP_KERNEL);
