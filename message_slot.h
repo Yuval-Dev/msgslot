@@ -1,12 +1,46 @@
-#ifndef MESSAGE_SLOT_H
-#define MESSAGE_SLOT_H
+#ifndef CHARDEV_H
+#define CHARDEV_H
 
-int init_module(void);
-void cleanup_module(void);
-static int device_open(struct inode *, struct file *);
-static int device_release(struct inode *, struct file *);
-static ssize_t device_read(struct file *, char *, size_t, off_t *);
-static ssize_t device_write(struct file *, const char *, size_t, off_t *);
+#include <linux/ioctl.h>
+#include <stddef.h>
+#include <linux/types.h>
+// The major device number.
+// We don't rely on dynamic registration
+// any more. We want ioctls to know this
+// number at compile time.
+//#define MAJOR_NUM 244
+#define MAJOR_NUM 236
 
+// Set the message of the device driver
+#define IOCTL_SET_ENC _IOW(MAJOR_NUM, 0, unsigned long)
 
+#define DEVICE_RANGE_NAME "char_dev"
+#define BUF_LEN 80
+#define DEVICE_FILE_NAME "simple_char_dev"
+#define SUCCESS 0
+#define MAX_DEVICE_ID 256
+#define MAX_CHANNEL_MESSAGE_LEN 128
+#define MSG_SLOT_CHANNEL 0x0
+#define MSG_SLOT_BAD_COPY 2
+#define MSG_SLOT_BAD_ACCESS 3
+#define MAX_CHANNEL_BITS 20
+#define MAX_CHANNEL_ID (1ll << MAX_CHANNEL_BITS)
+#define BTREE_CHILD_BITS 4
+#define BTREE_CHILD_COUNT (1ull << BTREE_CHILD_BITS)
+#define BTREE_CHILD_MASK (BTREE_CHILD_COUNT - 1)
+#define BTREE_NUM_LEVELS (MAX_CHANNEL_BITS / BTREE_CHILD_BITS)
+#define BTREE_LEVEL_MASK(level) ((BTREE_CHILD_MASK << ((BTREE_NUM_LEVELS - 1) * BTREE_CHILD_BITS)) >> ((level) * BTREE_CHILD_BITS))
+typedef struct _btree_layer {
+    void * children[BTREE_CHILD_COUNT];
+    size_t ref_cnt;
+    void * parent;
+} btree_layer, *pbtree_layer;
+typedef struct _channel {
+    char message[MAX_CHANNEL_MESSAGE_LEN];
+    size_t len;
+    int valid;
+    size_t ref_cnt;
+    unsigned int index;
+    void * parent;
+} channel, *pchannel;
 #endif
