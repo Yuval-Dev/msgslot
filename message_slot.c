@@ -21,8 +21,12 @@ MODULE_LICENSE("GPL");
 
 static btree_layer btree;
 
+/*
+A Btree defined according to parameters in message_slot.h
+In this case, it has 4 layers, and at each layer, there are 32 children.
+*/
+
 pchannel channel_open(int index) {
-  printk("channel_open(%d)\n", index);
   pbtree_layer cur_node, new_child;
   int level, i;
   pchannel channel;
@@ -32,9 +36,8 @@ pchannel channel_open(int index) {
     index >>= BTREE_CHILD_BITS;
     if(cur_node->children[i] == 0) {
       new_child = kmalloc(sizeof(btree_layer), GFP_KERNEL);
-      printk("kmalloc() -> %p\n", new_child);
       if(new_child == 0) {
-        printk("in channel_open(): bad kmalloc()\n");
+        printk("message_slot driver: error in channel_open(), bad kmalloc()\n");
         return 0;
       }
       cur_node->children[i] = new_child;
@@ -46,9 +49,8 @@ pchannel channel_open(int index) {
   index >>= BTREE_CHILD_BITS;
   if(cur_node->children[i] == 0) {
     void * addr = kmalloc(sizeof(struct _channel), GFP_KERNEL);
-    printk("kmalloc() -> %p\n", addr);
     if(addr == 0) {
-      printk("in channel_open(): bad kmalloc() 2\n");
+      printk("message_slot driver: error in channel_open(), bad kmalloc()\n");
       return 0;
     }
     cur_node->children[i] = addr;
@@ -68,7 +70,6 @@ void free_all(pbtree_layer ptr, int depth) {
         free_all(ptr->children[i], depth + 1);
       }
       kfree(ptr->children[i]);
-      printk("kfree(%p)\n", ptr->children[i]);
     }
   }
 }
@@ -166,7 +167,7 @@ static long device_ioctl( struct   file* file,
   }
   file->private_data = channel_open(ioctl_param);
   if(file->private_data == 0) {
-    return -EINVAL;
+    return -NOMEM;
   }
   return SUCCESS;
 }
@@ -190,7 +191,6 @@ static int __init simple_init(void)
 {
   memset(&btree, 0, sizeof(btree_layer));
   int rc = -1;
-  // init dev struct
   // Register driver capabilities. Obtain major num
   rc = register_chrdev( MAJOR_NUM, DEVICE_RANGE_NAME, &Fops );
 
@@ -201,7 +201,7 @@ static int __init simple_init(void)
     return rc;
   }
 
-  printk( "Registeration is successful!! ");
+  printk( "Registration was successful.\n");
   printk( "If you want to talk to the device driver,\n" );
   printk( "you have to create a device file:\n" );
   printk( "mknod /dev/%s c %d 0\n", DEVICE_FILE_NAME, MAJOR_NUM );
@@ -216,8 +216,6 @@ static int __init simple_init(void)
 static void __exit simple_cleanup(void)
 {
   free_all(&btree, 0);
-  // Unregister the device
-  // Should always succeed
   unregister_chrdev(MAJOR_NUM, DEVICE_RANGE_NAME);
 }
 
