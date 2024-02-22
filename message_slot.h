@@ -27,7 +27,6 @@
 #define BTREE_CHILD_COUNT (1ull << BTREE_CHILD_BITS)
 #define BTREE_CHILD_MASK (BTREE_CHILD_COUNT - 1)
 #define BTREE_NUM_LEVELS (MAX_CHANNEL_BITS / BTREE_CHILD_BITS)
-#define BTREE_LEVEL_MASK(level) ((BTREE_CHILD_MASK << ((BTREE_NUM_LEVELS - 1) * BTREE_CHILD_BITS)) >> ((level) * BTREE_CHILD_BITS))
 typedef struct _btree_layer {
     void * children[BTREE_CHILD_COUNT];
 } btree_layer, *pbtree_layer;

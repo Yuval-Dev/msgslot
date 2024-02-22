@@ -28,7 +28,8 @@ pchannel channel_open(int index) {
   pchannel channel;
   cur_node = &btree;
   for(level = 0; level < BTREE_NUM_LEVELS - 1; level++) {
-    i = index & BTREE_LEVEL_MASK(level);
+    i = index & BTREE_CHILD_MASK;
+    i >>= BTREE_CHILD_BITS;
     if(cur_node->children[i] == 0) {
       new_child = kmalloc(sizeof(btree_layer), GFP_KERNEL);
       printk("kmalloc() -> %p\n", new_child);
@@ -41,7 +42,8 @@ pchannel channel_open(int index) {
     }
     cur_node = cur_node->children[i];
   }
-  i = index & BTREE_LEVEL_MASK(BTREE_NUM_LEVELS - 1);
+  i = index & BTREE_CHILD_BITS;
+  i >>= BTREE_CHILD_BITS;
   if(cur_node->children[i] == 0) {
     void * addr = kmalloc(sizeof(struct _channel), GFP_KERNEL);
     printk("kmalloc() -> %p\n", addr);
