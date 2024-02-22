@@ -62,7 +62,7 @@ void free_all(pbtree_layer ptr, int depth) {
   int i;
   for(i = 0; i < BTREE_CHILD_COUNT; i++) {
     if(ptr->children[i] != 0) {
-      if(depth != BTREE_CHILD_COUNT - 1) {
+      if(depth != BTREE_NUM_LEVELS - 1) {
         free_all(ptr->children[i], depth + 1);
       }
       kfree(ptr->children[i]);
@@ -127,7 +127,7 @@ static ssize_t device_write( struct file*       file,
                              size_t             length,
                              loff_t*            offset)
 {
-  printk("Invoking device_write(%p)\n\r\n", file);
+  printk("Invoking device_write(%p)\n", file);
   pchannel channel;
   channel = (pchannel)file->private_data;
   if(channel == 0) {
@@ -156,7 +156,6 @@ static long device_ioctl( struct   file* file,
                           unsigned long  ioctl_param )
 {
   printk("Invoking device_ioctl(%p)\n", file);
-  pchannel channel = (pchannel)file->private_data;
   if(ioctl_command_id != MSG_SLOT_CHANNEL) {
     return -EINVAL;
   }
