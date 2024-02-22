@@ -162,7 +162,7 @@ static long device_ioctl( struct   file* file,
   if(ioctl_command_id != MSG_SLOT_CHANNEL) {
     return -EINVAL;
   }
-  if(ioctl_param > MAX_CHANNEL_ID) {
+  if(ioctl_param > MAX_CHANNEL_ID || ioctl_param == 0) {
     return -EINVAL;
   }
   file->private_data = channel_open(ioctl_param);

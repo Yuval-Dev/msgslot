@@ -7,6 +7,7 @@
 int main(int argc, char ** argv) {
     if(argc != 4) {
         fprintf(stderr, "invalid arguments... \nusage: message_write <channel_file> <channel_id> <message>");
+        return -1;
     }
     char * fname = argv[1];
     char * cid_end;
