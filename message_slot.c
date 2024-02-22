@@ -37,10 +37,8 @@ pchannel channel_open(int index) {
       }
       cur_node->children[i] = new_child;
       memset(new_child, 0, sizeof(btree_layer));
-      new_child->parent = cur_node;
     }
     cur_node = cur_node->children[i];
-    cur_node->ref_cnt++;
   }
   i = index & BTREE_LEVEL_MASK(BTREE_NUM_LEVELS - 1);
   if(cur_node->children[i] == 0) {
@@ -52,25 +50,10 @@ pchannel channel_open(int index) {
     cur_node->children[i] = addr;
     memset(addr, 0, sizeof(struct _channel));
     channel = (pchannel)addr;
-    channel->parent = cur_node;
-    channel->index = index;
   } else {
     channel = (pchannel)cur_node->children[i];
   }
-  channel->ref_cnt++;
   return channel;
-}
-
-
-void channel_close(pchannel channel) {
-  int index = channel->index;
-  int i;
-  pbtree_layer next, cur = channel->parent;
-  channel->ref_cnt--;
-  for(i = BTREE_NUM_LEVELS - 2; i >= 0; i--) {
-    next = cur->parent;
-    cur->ref_cnt--;
-  }
 }
 
 void free_all(pbtree_layer ptr, int depth) {
@@ -83,15 +66,6 @@ void free_all(pbtree_layer ptr, int depth) {
     kfree(ptr->children[i]);
   }
 }
-
-struct chardev_info {
-  spinlock_t lock;
-};
-
-// used to prevent concurent access into the same device
-static int dev_open_flag = 0;
-
-static struct chardev_info device_info;
 
 
 //================== DEVICE FUNCTIONS ===========================
@@ -110,9 +84,6 @@ static int device_release( struct inode* inode,
   pchannel cur_channel;
   cur_channel = (pchannel)file->private_data;
   printk("Invoking device_release(%p,%p)\n", inode, file);
-  if(cur_channel != 0) {
-    channel_close(cur_channel);
-  }
   return SUCCESS;
 }
 
@@ -130,11 +101,6 @@ static ssize_t device_read( struct file* file,
   if(channel == 0) {
     return -EINVAL;
   }
-  // read doesnt really do anything (for now)
-  //printk( "Invocing device_read(%p,%ld) - "
-  //        "operation not supported yet\n"
-  //        "(last written - %s)\n",
-  //        file, length, the_message );
   if(channel->len == 0) {
     return -EWOULDBLOCK;
   }
@@ -142,10 +108,10 @@ static ssize_t device_read( struct file* file,
     return -ENOSPC;
   }
   if(access_ok(buffer, length) == 0) {
-    return -MSG_SLOT_BAD_ACCESS;
+    return -EACCES;
   }
   if(copy_to_user(buffer, channel->message, channel->len) != 0) {
-    return -MSG_SLOT_BAD_COPY;
+    return -EFAULT;
   }
   return channel->len;
 }
@@ -171,11 +137,11 @@ static ssize_t device_write( struct file*       file,
     return -EINVAL;
   }
   if(access_ok(buffer, length) == 0) {
-    return -EFAULT;
+    return -EACCES;
   }
   if(copy_from_user(channel->message, buffer, length) != 0) {
     channel->len = 0;
-    return -EACCES;
+    return -EFAULT;
   }
   channel->len = length;
   return length;
@@ -194,11 +160,10 @@ static long device_ioctl( struct   file* file,
   if(ioctl_param > MAX_CHANNEL_ID) {
     return -EINVAL;
   }
-  if(channel != 0) {
-    channel_close(channel);
-    channel = 0;
-  }
   file->private_data = channel_open(ioctl_param);
+  if(file->private_data == 0) {
+    return -EINVAL;
+  }
   return SUCCESS;
 }
 

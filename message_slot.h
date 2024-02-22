@@ -32,15 +32,9 @@
 #define BTREE_LEVEL_MASK(level) ((BTREE_CHILD_MASK << ((BTREE_NUM_LEVELS - 1) * BTREE_CHILD_BITS)) >> ((level) * BTREE_CHILD_BITS))
 typedef struct _btree_layer {
     void * children[BTREE_CHILD_COUNT];
-    size_t ref_cnt;
-    void * parent;
 } btree_layer, *pbtree_layer;
 typedef struct _channel {
     char message[MAX_CHANNEL_MESSAGE_LEN];
     size_t len;
-    int valid;
-    size_t ref_cnt;
-    unsigned int index;
-    void * parent;
 } channel, *pchannel;
 #endif
