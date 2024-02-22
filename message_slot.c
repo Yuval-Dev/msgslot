@@ -59,13 +59,12 @@ pchannel channel_open(int index) {
 }
 
 void free_all(pbtree_layer ptr, int depth) {
-  if(depth == BTREE_NUM_LEVELS) {
-    return;
-  }
   int i;
   for(i = 0; i < BTREE_CHILD_COUNT; i++) {
-    if(ptr->children[i]) {
-      free_all(ptr->children[i], depth + 1);
+    if(ptr->children[i] != 0) {
+      if(i != BTREE_CHILD_COUNT - 1) {
+        free_all(ptr->children[i], depth + 1);
+      }
       kfree(ptr->children[i]);
       printk("kfree(%p)\n", ptr->children[i]);
     }
