@@ -3,6 +3,10 @@
 #include<linux/ioctl.h>
 #include<fcntl.h>
 #include<errno.h>
+#include<stdlib.h>
+#include<unistd.h>
+#include<sys/ioctl.h>
+#include<string.h>
 
 int main(int argc, char ** argv) {
     if(argc != 3) {
@@ -39,7 +43,7 @@ int main(int argc, char ** argv) {
         return -1;
     }
     buf[len] = 0;
-    if(write(stdout, buf, len) < 0) {
+    if(write(1, buf, len) < 0) {
         perror("in write()");
         return -1;
     }
