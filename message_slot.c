@@ -165,7 +165,11 @@ static long device_ioctl( struct   file* file,
   if(ioctl_param > MAX_CHANNEL_ID || ioctl_param == 0) {
     return -EINVAL;
   }
-  unsigned long full_id = ioctl_param | iminor(file->f_dentry->d_inode) << 20;
+#ifdef UNIQUE_CHANNEL_IDS
+  unsigned long full_id = (ioctl_param & ((1ll << 20) - 1)) | iminor(file_inode(file)) << 20;
+#else
+  unsigned long full_id = ioctl_param;
+#endif
   file->private_data = channel_open(full_id);
   if(file->private_data == 0) {
     return -ENOMEM;
